@@ -1,9 +1,12 @@
 import argparse
+import pickle
+
 import clip
 import kornia
 import numpy as np
 import torch
 from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.core.callback import Callback
 from pymoo.core.problem import Problem
 from pymoo.optimize import minimize
 from pytorch_pretrained_biggan import (BigGAN, convert_to_images,
@@ -11,8 +14,6 @@ from pytorch_pretrained_biggan import (BigGAN, convert_to_images,
                                        save_as_images, truncated_noise_sample)
 from torch import nn, optim
 from tqdm import tqdm
-import pickle
-from pymoo.core.callback import Callback
 
 if torch.cuda.is_available():
     print("CUDA detected")
@@ -110,6 +111,7 @@ def save_images(res, output_base, gan_model, batch_size=10):
                         torch.FloatTensor).to(device), 1).detach().to('cpu')
             save_as_images(final_image_gen, f"{output_base}/{k}_{i}")
 
+
 def main(args):
     biggan = BigGAN.from_pretrained(args.biggan_model).to(device)
     # TODO: Parametrize CLIP model.
@@ -123,6 +125,7 @@ def main(args):
         batch_size=args.batch_size,
     )
     save_images(res, args.output_base, biggan, batch_size=args.batch_size)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("A main entry point for image generation")
