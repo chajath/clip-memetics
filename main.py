@@ -1,4 +1,5 @@
 import argparse
+import os
 import pickle
 
 import clip
@@ -113,6 +114,7 @@ def save_images(res, output_base, gan_model, batch_size=10):
 
 
 def main(args):
+    os.makedirs(args.output_base, exist_ok=True)
     biggan = BigGAN.from_pretrained(args.biggan_model).to(device)
     # TODO: Parametrize CLIP model.
     res = run_optimization_save(
