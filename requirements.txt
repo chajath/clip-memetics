@@ -5,3 +5,4 @@ pymoo==0.5.0
 numpy
 tqdm
 fire
+kornia
