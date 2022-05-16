@@ -74,16 +74,24 @@ def run_optimization_save(prompt_text,
                           num_gen=20,
                           random_seed=None,
                           output_base="./data",
-                          batch_size=10):
+                          batch_size=10,
+                          sampling=None):
     f_name = f"{prompt_text}-{random_seed}-{pop_size}-{num_gen}"
     print(f_name)
     goal_embedding = clip_model.encode_text(
         clip.tokenize(prompt_text).to(device))
     problem = ArtGenProblem(gan_model, goal_embedding, batch_size=batch_size)
-    algorithm = GA(
-        pop_size=pop_size,
-        seed=random_seed,
-    )
+    if sampling is None:
+        algorithm = GA(
+            pop_size=pop_size,
+            seed=random_seed,
+        )
+    else:
+        algorithm = GA(
+            pop_size=pop_size,
+            seed=random_seed,
+            sampling=sampling,
+        )
     res = minimize(
         problem,
         algorithm, ('n_gen', num_gen),
@@ -117,6 +125,12 @@ def main(args):
     os.makedirs(args.output_base, exist_ok=True)
     biggan = BigGAN.from_pretrained(args.biggan_model).to(device)
     # TODO: Parametrize CLIP model.
+    # Load previous population.
+    if args.from_population is not None:
+        with open(args.from_population, "rb") as fp: p = pickle.load(fp)
+        X = p.algorithm.callback.data["X"][args.from_population_gen]
+    else:
+        X = None
     res = run_optimization_save(
         args.prompt_text,
         pop_size=args.pop_size,
@@ -125,6 +139,7 @@ def main(args):
         gan_model=biggan,
         output_base=args.output_base,
         batch_size=args.batch_size,
+        sampling=X,
     )
     save_images(res, args.output_base, biggan, batch_size=args.batch_size)
 
@@ -138,4 +153,6 @@ if __name__ == "__main__":
     parser.add_argument("--biggan_model", type=str, default="biggan-deep-512")
     parser.add_argument("--output_base", default="./data")
     parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("--from_population", type=str, default=None)
+    parser.add_argument("--from_population_gen", type=int, default=-1)
     main(parser.parse_args())
