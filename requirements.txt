@@ -1,0 +1,6 @@
+pytorch-pretrained-biggan
+folium==0.2.1
+clip@git+https://github.com/openai/CLIP.git
+pymoo
+numpy
+tqdm
