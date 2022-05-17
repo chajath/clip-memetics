@@ -124,10 +124,10 @@ def save_images(res, output_base, gan_model, batch_size=10):
 def main(args):
     os.makedirs(args.output_base, exist_ok=True)
     biggan = BigGAN.from_pretrained(args.biggan_model).to(device)
-    # TODO: Parametrize CLIP model.
     # Load previous population.
     if args.from_population is not None:
-        with open(args.from_population, "rb") as fp: p = pickle.load(fp)
+        with open(args.from_population, "rb") as fp:
+            p = pickle.load(fp)
         X = p.algorithm.callback.data["X"][args.from_population_gen]
     else:
         X = None
@@ -145,14 +145,28 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("A main entry point for image generation")
-    parser.add_argument("--prompt_text", type=str)
-    parser.add_argument("--pop_size", type=int, default=10)
-    parser.add_argument("--num_gen", type=int, default=20)
-    parser.add_argument("--random_seed", type=int, default=None)
-    parser.add_argument("--biggan_model", type=str, default="biggan-deep-512")
-    parser.add_argument("--output_base", default="./data")
-    parser.add_argument("--batch_size", type=int, default=10)
-    parser.add_argument("--from_population", type=str, default=None)
-    parser.add_argument("--from_population_gen", type=int, default=-1)
+    parser = argparse.ArgumentParser(
+        "A main entry point for image generation.")
+    parser.add_argument("--prompt_text", type=str, required=True,
+                        help="CLIP prompt text for image embeddings to be compared with.")
+    parser.add_argument("--pop_size", type=int, default=10,
+                        help="Population size of the genetic algorithm.")
+    parser.add_argument("--num_gen", type=int, default=20,
+                        help="Number of generations to run.")
+    parser.add_argument("--random_seed", type=int, default=None,
+                        help="Random seed for reproducibility.")
+    parser.add_argument("--biggan_model", type=str, default="biggan-deep-512",
+                        help="BigGAN model. See https://github.com/huggingface/pytorch-pretrained-BigGAN#models for the list of supported models.")
+    parser.add_argument("--clip_model", type=str, default="ViT-B/32",
+                        help=f"CLIP model. Available models are: {clip.available_models()}")
+    parser.add_argument("--output_base", default="./data",
+                        help="Path prefix under which all generated files will be written.")
+    parser.add_argument("--batch_size", type=int, default=10,
+                        help="Batch size for generation and inference. Tweak this number if you run into trouble with GPU memory issues.")
+    parser.add_argument("--from_population", type=str, default=None,
+                        help="Path to a pickle dump from which population will be sampled. Will be randomly generated if not given.")
+    parser.add_argument("--from_population_gen", type=int, default=-1,
+                        help="Generation number of the sampling population. -1 will give the last generation.")
+    args = parser.parse_args()
+    clip_model, clip_preprocess = clip.load(args.clip_model, device=device)
     main(parser.parse_args())
